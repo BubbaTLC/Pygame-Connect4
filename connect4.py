@@ -5,7 +5,7 @@ COL_COUNT = 7
 
 
 def create_board():
-    board = np.zeros((ROW_COUNT, COL_COUNT))
+    board = np.zeros((ROW_COUNT, COL_COUNT), dtype=int)
     return board
 
 
@@ -27,6 +27,30 @@ def print_board(board):
     print(np.flip(board, 0))
 
 
+def winning_move(board, piece):
+    # Check all horizontal locations for win
+    for c in range(COL_COUNT-3):
+        for r in range(ROW_COUNT):
+            if board[r][c] == piece and board[r][c+1] == piece and board[r][c+2] == piece and board[r][c+3] == piece:
+                return True
+
+    # vertical locations for win
+    for c in range(COL_COUNT):
+        for r in range(ROW_COUNT - 3):
+            if board[r][c] == piece and board[r+1][c] == piece and board[r+2][c] == piece and board[r+3][c] == piece:
+                return True
+
+    for c in range(COL_COUNT - 3):
+        for r in range(ROW_COUNT - 3):
+            if board[r][c] == piece and board[r+1][c+1] == piece and board[r+2][c+2] == piece and board[r+3][c+3] == piece:
+                return True
+
+    for c in range(COL_COUNT - 3):
+        for r in range(3, ROW_COUNT):
+            if board[r][c] == piece and board[r-1][c+1] == piece and board[r-2][c+2] == piece and board[r-3][c+3] == piece:
+                return True
+
+
 board = create_board()
 print_board(board)
 gameOver = False
@@ -41,6 +65,12 @@ while not gameOver:
             row = get_next_open_row(board, col)
             drop_piece(board, row, col, 1)
 
+            if winning_move(board, 1):
+                print_board(board)
+                print("Player 1 wins!!!")
+                gameOver = True
+                break
+
     # ask for player 2 input
     else:
         col = int(input("Player 2 Make your Selection (0-6):"))
@@ -48,6 +78,12 @@ while not gameOver:
         if is_valid_location(board, col):
             row = get_next_open_row(board, col)
             drop_piece(board, row, col, 2)
+
+            if winning_move(board, 2):
+                print_board(board)
+                print("Player 2 wins!!!")
+                gameOver = True
+                break
 
     print_board(board)
 
