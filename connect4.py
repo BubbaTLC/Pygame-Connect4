@@ -108,12 +108,12 @@ def evaluate_window(window, piece):
     if window.count(piece) == 4:
         score += 100
     elif window.count(piece) == 3 and window.count(EMPTY) == 1:
-        score += 10
-    elif window.count(piece) == 2 and window.count(EMPTY) == 2:
         score += 5
+    elif window.count(piece) == 2 and window.count(EMPTY) == 2:
+        score += 2
 
     if window.count(opp_piece) == 3 and window.count(EMPTY) == 1:
-        score -= 80
+        score -= 4
     
     return score
 
@@ -126,7 +126,7 @@ def score_positions(board, piece):
     # Score Center
     centerArray = [int(i) for i in list(board[:, COL_COUNT//2])]
     centerCount = centerArray.count(piece)
-    score += centerCount * 6
+    score += centerCount * 3
 
     # Score Horizontal #
     for r in range(ROW_COUNT):
@@ -156,6 +156,54 @@ def score_positions(board, piece):
 
     return score
 
+def is_terminal_node(board):
+    return winning_move(board, PLAYER_PIECE) or winning_move(board, AI_PIECE) or len(get_valid_locations(board)) == 0
+
+def minimax(board, depth, alpha, beta, maximizingPlayer):
+    validLocations = get_valid_locations(board)
+    isTerminal = is_terminal_node(board)
+    if depth == 0 or isTerminal:
+        if isTerminal:
+            if winning_move(board, AI_PIECE):
+                return (None, 1000000)
+            elif winning_move(board, PLAYER_PIECE):
+                return (None, -1000000)
+            else: # Game over, no valid moves
+                return (None, 0)
+        else:
+            return (None, score_positions(board, AI_PIECE))
+
+    if maximizingPlayer:
+        value = -math.inf
+        column = random.choice(validLocations)
+        for col in validLocations:
+            row = get_next_open_row(board, col)
+            bCopy = board.copy()
+            drop_piece(bCopy, row, col, AI_PIECE)
+            newScore = minimax(bCopy, depth-1, alpha, beta, False)[1]
+            if newScore > value:
+                value = newScore
+                column = col
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break
+        return (column, value)
+    else:
+        value = math.inf
+        column = random.choice(validLocations)
+        for col in validLocations:
+            row = get_next_open_row(board, col)
+            bCopy = board.copy()
+            drop_piece(bCopy, row, col, PLAYER_PIECE)
+            newScore = minimax(bCopy, depth-1, alpha, beta, True)[1]
+            if newScore < value:
+                value = newScore
+                column = col
+            beta = min(beta, value)
+            if alpha >= beta:
+                break
+        return (column, value)
+
 def get_valid_locations(board):
     """
     Returns all possible columns that can be played.
@@ -183,7 +231,7 @@ def pick_best_move(board, piece):
             bestCol = col
 
     return bestCol
-        
+
 
 
 def draw_board(board):
@@ -256,10 +304,10 @@ if __name__ == "__main__":
         # AI turn
         if turn == AI and not gameOver:
             # col = random.randint(0, COL_COUNT-1)
-            col = pick_best_move(board, AI_PIECE)
+            # col = pick_best_move(board, AI_PIECE)
+            col, minimaxScore = minimax(board, 6, -np.inf, np.inf, True)
 
             if is_valid_location(board, col):
-                pygame.time.wait(500)
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, AI_PIECE)
 
